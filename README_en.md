@@ -186,7 +186,7 @@ Try Nav + physical Shift + the target key, or an external keyboard.
 
 ## Source
 
-The repository contains all generated scripts, icons, configuration examples, and binding CSVs
+The repository contains all generated scripts, icons, and configuration examples
 under `src/v1/` and `src/v2/`. Install the corresponding AutoHotkey version to run a source script.
 Each source directory includes a sanitized `TucknHotkey.ini`; customize it locally if needed.
 

@@ -55,7 +55,7 @@ Windows の表示言語ではありません。
 
 ```mermaid
 flowchart TD
-    OS{"1. Windows の配列設定は日本語（106/109キー）？<br/>目安：Shift + 2 で &quot; が出る"}
+    OS{"1. Windows の配列設定は日本語（106/109キー）？<br/>目安：Shift + 2 で #34; が出る"}
     OS -->|Yes| JJ{"2. 物理キーボードは日本語（JIS配列）？<br/>目安：スペースの左に無変換、右に変換"}
     OS -->|No：英語 US| AJ{"2. 物理キーボードは日本語（JIS配列）？<br/>目安：スペースの左に無変換、右に変換"}
     JJ -->|No：ANSI| UnsupportedOS["対応する配布ファイルなし<br/>OsJis / KeyboardAnsi"]
@@ -404,8 +404,8 @@ ZIP には配布既定値の `TucknHotkey.ini` が入っています。既存フ
 
 ## ソースと詳細な割り当て
 
-公開リポジトリの `src/v1/` と `src/v2/` に、全種類の生成済みスクリプト、アイコン、設定例、割り当て CSV を置いています。
-`csv/` 内の Keyboard 用 `*_rules.csv` と Mouse 用 `*_bindings.csv` で、選んだ種類の詳しい割り当てを確認できます。
+公開リポジトリの `src/v1/` と `src/v2/` に、全種類の生成済みスクリプト、アイコン、設定例を置いています。
+選んだ種類の `.ahk` スクリプトで、詳しい割り当てを確認できます。
 
 Remote-Limited JIS はソースのみ公開し、exe は配布しません。
 特定バージョンの exe に対応するソースは、同じ Release タグから取得してください。
@@ -414,7 +414,7 @@ Remote-Limited JIS はソースのみ公開し、exe は配布しません。
 | 調べたいこと | 参照先 |
 | --- | --- |
 | 配布ファイルと各バージョンのソースを取得する | [Releases](https://github.com/tuckn/AhkTucknHotkey/releases) |
-| 公開されているスクリプトと割り当て CSV を読む | [AhkTucknHotkey リポジトリ](https://github.com/tuckn/AhkTucknHotkey)の `src/v1/` / `src/v2/` |
+| 公開されているスクリプトを読む | [AhkTucknHotkey リポジトリ](https://github.com/tuckn/AhkTucknHotkey)の `src/v1/` / `src/v2/` |
 | 利用・再配布条件を確認する | [LICENSE](LICENSE) |
 
 ## ライセンス
