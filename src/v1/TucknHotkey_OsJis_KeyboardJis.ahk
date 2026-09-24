@@ -1669,15 +1669,14 @@ InitImeIndicator() {
     if !RegExMatch(enabled, "i)^(1|true|on|yes)$")
         return
 
-    color := Trim(GetLocalConfigValue("ImeIndicator", "color", "#E07000"))
+    defaults := GetImeIndicatorDefaults()
+    color := Trim(GetLocalConfigValue("ImeIndicator", "color", defaults.color))
     if !RegExMatch(color, "i)^#?([0-9a-f]{6})$", match)
-        color := "E07000"
+        color := defaults.color
     else
         color := match1
-    size := Trim(GetLocalConfigValue("ImeIndicator", "size_px", "10"))
-    if (!RegExMatch(size, "^\d+$") || size < 3 || size > 24)
-        size := 10
-    gImeIndicator.size := size + 0
+    gImeIndicator.color := color
+    ConfigureImeIndicatorGeometry()
 
     try {
         ; Layered + transparent + no-activate: the marker never consumes clicks or focus.
@@ -1686,12 +1685,57 @@ InitImeIndicator() {
         Gui, ImeIndicator:Color, %color%
         if !DllCall("SetLayeredWindowAttributes", "Ptr", hwnd, "UInt", 0, "UChar", 255, "UInt", 2)
             throw Exception("Cannot initialize IME indicator")
+        SetImeIndicatorShape(hwnd)
         gImeIndicator.enabled := true
         OnExit(Func("StopImeIndicator"))
         timer := Func("UpdateImeIndicator")
         SetTimer, %timer%, 100
     } catch {
         StopImeIndicator()
+    }
+}
+
+ConfigureImeIndicatorGeometry() {
+    global gImeIndicator
+    defaults := GetImeIndicatorDefaults()
+    shape := Trim(GetLocalConfigValue("ImeIndicator", "shape", ""))
+    ; Preserve old underline-only configurations; explicit shape/dimensions opt in to the new defaults.
+    legacy := shape = "" && Trim(GetLocalConfigValue("ImeIndicator", "size_px", "")) != ""
+        && Trim(GetLocalConfigValue("ImeIndicator", "width_px", "")) = ""
+        && Trim(GetLocalConfigValue("ImeIndicator", "height_px", "")) = ""
+    if legacy
+        shape := "rectangle"
+    gImeIndicator.shape := shape = "rectangle" ? "rectangle" : (shape = "ellipse" ? "ellipse" : defaults.shape)
+    widthDefault := legacy ? GetImeIndicatorInteger("size_px", 10, 3, 24) : defaults.width_px
+    gImeIndicator.width := GetImeIndicatorInteger("width_px", widthDefault, 2, 32)
+    gImeIndicator.height := GetImeIndicatorInteger("height_px", legacy ? 2 : defaults.height_px, 2, 32)
+    gImeIndicator.offsetX := GetImeIndicatorInteger("offset_x_px", legacy ? 5 : defaults.offset_x_px, -64, 64)
+    gImeIndicator.offsetY := GetImeIndicatorInteger("offset_y_px", legacy ? -4 : defaults.offset_y_px, -64, 64)
+}
+
+GetImeIndicatorInteger(key, fallback, minimum, maximum) {
+    value := Trim(GetLocalConfigValue("ImeIndicator", key, ""))
+    if (!RegExMatch(value, "^-?\d+$") || value < minimum || value > maximum)
+        return fallback
+    return value + 0
+}
+
+SetImeIndicatorShape(hwnd) {
+    global gImeIndicator
+    if (gImeIndicator.shape != "ellipse")
+        return
+    region := DllCall("gdi32\CreateEllipticRgn", "Int", 0, "Int", 0
+        , "Int", gImeIndicator.width, "Int", gImeIndicator.height, "Ptr")
+    if !region
+        throw Exception("Cannot create IME indicator shape")
+    try {
+        if !DllCall("SetWindowRgn", "Ptr", hwnd, "Ptr", region, "Int", false)
+            throw Exception("Cannot apply IME indicator shape")
+        ; SetWindowRgn transfers ownership to Windows, which frees it with the window.
+        region := 0
+    } finally {
+        if region
+            DllCall("gdi32\DeleteObject", "Ptr", region)
     }
 }
 
@@ -1774,15 +1818,14 @@ ShowImeIndicator(caretX, caretY, caretHeight) {
         HideImeIndicator()
         return
     }
-    width := gImeIndicator.size
-    ; Keep the underline inside the current line, clear of the native fans above/below it.
-    x := caretX + 5
-    y := caretY + caretHeight - 4
+    ; The marker's top-left is relative to the caret's bottom-left (screen pixels).
+    x := caretX + gImeIndicator.offsetX
+    y := caretY + caretHeight + gImeIndicator.offsetY
     if (gImeIndicator.visible && gImeIndicator.x = x && gImeIndicator.y = y)
         return
     ; Screen coordinates and unscaled pixels; no per-frame A_WinDelay.
     if !DllCall("SetWindowPos", "Ptr", gImeIndicator.hwnd, "Ptr", -1
-        , "Int", x, "Int", y, "Int", width, "Int", 2, "UInt", 0x50) {
+        , "Int", x, "Int", y, "Int", gImeIndicator.width, "Int", gImeIndicator.height, "UInt", 0x50) {
         HideImeIndicator()
         return
     }
@@ -2207,5 +2250,11 @@ GetLocalConfigValueFromText(configPath, section, key, defaultValue := "") {
 
 GetLocalConfigPath() {
     return A_ScriptDir . "\TucknHotkey.ini"
+}
+
+; Generated defaults: runtime/ahk/TucknHotkey.ini (edit source and regenerate).
+GetImeIndicatorDefaults() {
+    static defaults := {color: "E04040", shape: "ellipse", width_px: 6, height_px: 6, offset_x_px: 3, offset_y_px: -3}
+    return defaults
 }
 

@@ -144,22 +144,35 @@ Both programs read the same `TucknHotkey.ini`; there is no separate mouse ini.
 
 ### IME ON marker
 
-The bundled configuration shows a short underline at the lower right of the text caret while IME is ON. Edit the following
-section to `TucknHotkey.ini` next to the running Keyboard program, then reload Keyboard.
+The bundled configuration shows a 6px red dot at the lower right of the text caret while IME is ON.
+Inspired by the Japanese flag, its shape distinguishes it from spell-check underlines. Edit the following
+section in `TucknHotkey.ini` next to the running Keyboard program, then reload Keyboard.
 Preserve any existing sections. Set `enabled=0` to disable the marker.
 
 ```ini
 [ImeIndicator]
 enabled=1
-color=#E07000
-size_px=10
+color=#E04040
+shape=ellipse
+width_px=6
+height_px=6
+offset_x_px=3
+offset_y_px=-3
 ```
 
 - `enabled`: `1`, `true`, `on`, or `yes` enables the marker; other/missing values disable it.
-- `color`: `#RRGGBB` or `RRGGBB`; missing/invalid values use orange `#E07000`.
-- `size_px`: line width, 3–24 pixels; missing/invalid values use `10`. Existing values are retained as the width.
+- `color`: `#RRGGBB` or `RRGGBB`; missing/invalid values use red `#E04040`.
+- `shape`: `ellipse` or `rectangle`; missing/invalid values use `ellipse`. Equal ellipse dimensions make a circle.
+- `width_px` / `height_px`: each 2–32px; both default to `6`.
+- `offset_x_px` / `offset_y_px`: marker top-left relative to caret bottom-left. Each accepts -64 to 64px; defaults are `3` / `-3`. Positive values move right/down; negative values move left/up.
 
-The line is 2px thick, 5px to the right of the caret, and ends 2px above its bottom edge.
+Dimensions and offsets use screen pixels. Missing, invalid, or out-of-range numbers fall back per setting.
+For a short vertical bar, use `shape=rectangle`, `width_px=3`, `height_px=10`, and `offset_y_px=-15`.
+For an underline, use `shape=rectangle`, `width_px=10`, `height_px=2`, and `offset_y_px=-4`.
+Legacy configurations containing `size_px` but no `shape`, `width_px`, or `height_px` retain the old underline:
+width 3–24px (default 10), height 2px, offsets 5/-4. Apply the settings above to switch to the red dot.
+Explicit shape or dimension settings take precedence over `size_px`.
+
 The marker follows the caret approximately every 100 ms without taking focus or clicks.
 It hides when IME is OFF, IME/caret information is unavailable, or Keyboard is suspended,
 paused from its tray menu, or exited. Reload Keyboard after editing settings.
